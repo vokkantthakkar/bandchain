@@ -31,6 +31,7 @@
 - (impv) [\#2355](https://github.com/bandprotocol/bandchain/pull/2355) Implemented the realtime price function
 
 ### Bridges
+- (feat) [\#2385](https://github.com/bandprotocol/bandchain/pull/2385) Add icon bridge.
 
 ### Runtime
 
