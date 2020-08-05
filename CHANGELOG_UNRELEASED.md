@@ -12,6 +12,7 @@
 
 ### Chain (Non-consensus)
 
+- (impv) [\#2387](https://github.com/bandprotocol/bandchain/pull/2387) Implementation of allow free report transaction.
 - (patch) [\#2396](https://github.com/bandprotocol/bandchain/pull/2396) Upgrade to Cosmos-SDK v0.39.1-rc3.
 - (chore) [\#2381](https://github.com/bandprotocol/bandchain/pull/2381) test: Add more unit tests in keeper.go.
 
