@@ -17,7 +17,7 @@ module Styles = {
 };
 
 [@react.component]
-let make = (~id: ID.Request.t, ~requestOpt: option(RequestSub.Mini.t)) => {
+let make = (~id: ID.Request.t) => {
   let (proofOpt, reload) = ProofHook.get(id);
 
   React.useEffect1(
@@ -47,8 +47,8 @@ let make = (~id: ID.Request.t, ~requestOpt: option(RequestSub.Mini.t)) => {
           height={Text.Px(15)}
         />
       </div>
-      {switch (proofOpt, requestOpt) {
-       | (Some(proof), Some({result: Some(_)})) =>
+      {switch (proofOpt) {
+       | Some(proof) =>
          <div className={Styles.hFlex(`auto)}>
            <CopyButton data={proof.evmProofBytes} title="Copy EVM proof" width=115 />
            <HSpacing size=Spacing.md />

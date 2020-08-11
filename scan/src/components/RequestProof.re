@@ -29,7 +29,7 @@ module Styles = {
 };
 
 [@react.component]
-let make = (~requestID: ID.Request.t, ~requestOpt: option(RequestSub.t)) => {
+let make = (~requestID: ID.Request.t) => {
   let (proofOpt, reload) = ProofHook.get(requestID);
   let (showProof, setShowProof) = React.useState(_ => false);
 
@@ -72,12 +72,7 @@ let make = (~requestID: ID.Request.t, ~requestOpt: option(RequestSub.t)) => {
               <CopyButton data={proof.evmProofBytes} title="Copy EVM proof" width=115 />
               <HSpacing size=Spacing.md />
               <CopyButton
-                data={
-                  switch (requestOpt) {
-                  | Some({result: Some(_)}) => proof.jsonProof->NonEVMProof.createProofFromJson
-                  | _ => "" |> JsBuffer.fromHex
-                  }
-                }
+                data={proof.jsonProof->NonEVMProof.createProofFromJson}
                 title="Copy non-EVM proof"
                 width=130
               />
