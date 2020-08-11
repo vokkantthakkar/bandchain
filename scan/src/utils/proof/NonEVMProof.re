@@ -189,7 +189,6 @@ type variant_of_proof_t =
 let rec encode =
   fun
   | RequestPacket({clientID, oracleScriptID, calldata, askCount, minCount}) => {
-      Js.Console.log2(">>>", calldata |> JsBuffer.toHex(~with0x=true));
       Obi.encode(
         {j|{clientID: string, oracleScriptID: u64, calldata: bytes, askCount: u64, minCount: u64}/{_:u64}|j},
         "input",
@@ -375,22 +374,6 @@ let rec encode =
       let%Opt encodeReq = encode(RequestPacket(requestPacket));
       let%Opt encodeRes = encode(ResponsePacket(responsePacket));
       let%Opt encodeIAVLMerklePaths = encode(IAVLMerklePaths(iavl_merkle_paths));
-
-      Js.Console.log("_________________________________ MultiStore");
-      Js.Console.log(encodeMultiStore |> JsBuffer.toHex(~with0x=true));
-      Js.Console.log("_________________________________ BlockHeaderMerkleParts");
-      Js.Console.log(encodeBlockHeaderMerkleParts |> JsBuffer.toHex(~with0x=true));
-      Js.Console.log("_________________________________ Signatures");
-      Js.Console.log(encodeSignatures |> JsBuffer.toHex(~with0x=true));
-      Js.Console.log("_________________________________ Req");
-      Js.Console.log(requestPacket);
-      Js.Console.log(encodeReq |> JsBuffer.toHex(~with0x=true));
-      Js.Console.log("_________________________________ Res");
-      Js.Console.log(responsePacket);
-      Js.Console.log(encodeRes |> JsBuffer.toHex(~with0x=true));
-      Js.Console.log("_________________________________ IAVL");
-      Js.Console.log(encodeIAVLMerklePaths |> JsBuffer.toHex(~with0x=true));
-
       Obi.encode(
         {j|{
           blockHeight: u64,
@@ -552,41 +535,11 @@ let toPackets = (request: request_t) => {
   };
 };
 
-let createProof_2 = (proof: Js.Json.t) => {
-  let x = proof |> decodeProof;
-  // Js.Console.log("_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_+_");
-  // Js.Console.log(x);
-  // Js.Console.log(
-  //   RequestPacket(x.oracleDataProof.requestPacket)
-  //   |> encode
-  //   |> Belt_Option.map(_, JsBuffer.toHex(~with0x=true)),
-  // );
-  // Js.Console.log("@!@!@!@!@!@!@!@!@!@!@!@!@!@!@!@!@!@!@!@");
-  // Js.Console.log(
-  //   ResponsePacket(x.oracleDataProof.responsePacket)
-  //   |> encode
-  //   |> Belt_Option.map(_, JsBuffer.toHex(~with0x=true)),
-  // );
-  // Js.Console.log(
-  //   "‘“‘“‘“‘“‘“‘‘“‘“‘“‘“‘“‘“‘“‘“‘“‘“‘“‘“‘“‘",
-  // );
-  // Js.Console.log(
-  //   IAVLMerklePaths(x.oracleDataProof.iavl_merkle_paths)
-  //   |> encode
-  //   |> Belt_Option.map(_, JsBuffer.toHex(~with0x=true)),
-  // );
-
-  // Js.Console.log(
-  //   "•••••••••••••••••••••••••••••••••••••",
-  // );
-  // Js.Console.log(
-  //   Signatures(x.blockRelayProof.signatures) |> encode |> Belt_Option.map(_, JsBuffer.toHex(~with0x=true)),
-  // );
-  Js.Console.log("§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§§");
-  Js.Console.log(Proof(x) |> encode |> Belt_Option.map(_, JsBuffer.toHex(~with0x=true)));
+let createProof = (proof: Js.Json.t) => {
+  Proof(proof |> decodeProof) |> encode |> Belt_Option.getExn;
 };
 
-let createProof = (request: request_t) => {
+let createProof_2 = (request: request_t) => {
   let (req, res) = request->toPackets;
   JsBuffer.concat([|req->encodeRequest, res->encodeResponse|]);
 };

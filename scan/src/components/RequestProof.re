@@ -74,8 +74,7 @@ let make = (~requestID: ID.Request.t, ~requestOpt: option(RequestSub.t)) => {
               <CopyButton
                 data={
                   switch (requestOpt) {
-                  | Some({result: Some(_)}) =>
-                    NonEVMProof.Request(requestOpt->Belt_Option.getExn)->NonEVMProof.createProof
+                  | Some({result: Some(_)}) => proof.jsonProof->NonEVMProof.createProof
                   | _ => "" |> JsBuffer.fromHex
                   }
                 }
@@ -90,9 +89,6 @@ let make = (~requestID: ID.Request.t, ~requestOpt: option(RequestSub.t)) => {
       </div>
       {showProof
          ? <>
-             <button onClick={_ => proof.jsonProof |> NonEVMProof.createProof_2}>
-               {"mumu" |> React.string}
-             </button>
              <VSpacing size=Spacing.lg />
              <div className=Styles.scriptContainer>
                <ReactHighlight className=Styles.padding>

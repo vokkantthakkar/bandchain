@@ -53,9 +53,7 @@ let make = (~id: ID.Request.t, ~requestOpt: option(RequestSub.Mini.t)) => {
            <CopyButton data={proof.evmProofBytes} title="Copy EVM proof" width=115 />
            <HSpacing size=Spacing.md />
            <CopyButton
-             data={
-               NonEVMProof.RequestMini(requestOpt->Belt_Option.getExn)->NonEVMProof.createProof
-             }
+             data={proof.jsonProof->NonEVMProof.createProof}
              title="Copy non-EVM proof"
              width=130
            />
