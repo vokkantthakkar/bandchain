@@ -1,5 +1,3 @@
-// TODO: Replace this mock by the real
-
 type request_t =
   | Request(RequestSub.t)
   | RequestMini(RequestSub.Mini.t);
@@ -182,8 +180,6 @@ type variant_of_proof_t =
   | BlockHeaderMerkleParts(block_header_merkle_parts_t)
   | Signature(tm_signature_t)
   | Signatures(list(tm_signature_t))
-  | OracleDataProof(oracle_data_proof_t)
-  | BlockRelayProof(block_relay_proof_t)
   | Proof(proof_t);
 
 let rec encode =
@@ -324,44 +320,6 @@ let rec encode =
            |])
          );
     }
-  | OracleDataProof({requestPacket, responsePacket, version, iavl_merkle_paths}) => {
-      let%Opt encodedRequestPacket = encode(RequestPacket(requestPacket));
-      let%Opt encodeRequestPacket = encode(ResponsePacket(responsePacket));
-      let encodeVersion = obi_encode_int(version, "u64");
-      let%Opt encodeIAVLMerklePaths = encode(IAVLMerklePaths(iavl_merkle_paths));
-      Some(
-        JsBuffer.concat([|
-          encodedRequestPacket,
-          encodeRequestPacket,
-          encodeVersion,
-          encodeIAVLMerklePaths,
-        |]),
-      );
-    }
-  | BlockRelayProof({multiStoreProof, blockHeaderMerkleParts, signatures}) => {
-      let%Opt encodeMultiStoreProof = encode(MultiStoreProof(multiStoreProof));
-      let%Opt encodeBlockHeaderMerkleParts =
-        encode(BlockHeaderMerkleParts(blockHeaderMerkleParts));
-      let%Opt encodeSignatures = encode(Signatures(signatures));
-      Obi.encode(
-        {j|{multiStoreProof: bytes, blockHeaderMerkleParts: bytes, signatures: bytes}/{_:u64}|j},
-        "input",
-        [|
-          {
-            fieldName: "multiStoreProof",
-            fieldValue: encodeMultiStoreProof |> JsBuffer.toHex(~with0x=true),
-          },
-          {
-            fieldName: "blockHeaderMerkleParts",
-            fieldValue: encodeBlockHeaderMerkleParts |> JsBuffer.toHex(~with0x=true),
-          },
-          {
-            fieldName: "signatures",
-            fieldValue: encodeSignatures |> JsBuffer.toHex(~with0x=true),
-          },
-        |],
-      );
-    }
   | Proof({
       blockHeight,
       oracleDataProof: {requestPacket, responsePacket, version, iavl_merkle_paths},
@@ -413,133 +371,6 @@ let rec encode =
       );
     };
 
-let int8ToHex: int => string = [%bs.raw
-  {|
-  function int32ToHex(x) {
-    return x.toString(16).padStart(2,0)
-  }
-|}
-];
-
-let int32ToHex: int => string = [%bs.raw
-  {|
-  function int32ToHex(x) {
-    return x.toString(16).padStart(8,0)
-  }
-|}
-];
-
-let int64ToHex: int => string = [%bs.raw
-  {|
-  function int32ToHex(x) {
-    return x.toString(16).padStart(16,0)
-  }
-|}
-];
-
-let encodeString = (s: string) => {
-  let buf = JsBuffer.fromUTF8(s);
-  JsBuffer.concat([|buf->JsBuffer.byteLength->int32ToHex->JsBuffer.fromHex, buf|]);
-};
-
-let encodeBuffer = (buf: JsBuffer.t) =>
-  JsBuffer.concat([|buf->JsBuffer.byteLength->int32ToHex->JsBuffer.fromHex, buf|]);
-
-let encodeRequest = (req: request_packet_t) => {
-  JsBuffer.concat([|
-    req.clientID->encodeString,
-    req.oracleScriptID->int64ToHex->JsBuffer.fromHex,
-    req.calldata->encodeBuffer,
-    req.askCount->int64ToHex->JsBuffer.fromHex,
-    req.minCount->int64ToHex->JsBuffer.fromHex,
-  |]);
-};
-
-let encodeResponse = (res: response_packet_t) => {
-  JsBuffer.concat([|
-    res.clientID->encodeString,
-    res.requestID->int64ToHex->JsBuffer.fromHex,
-    res.ansCount->int64ToHex->JsBuffer.fromHex,
-    res.requestTime->int64ToHex->JsBuffer.fromHex,
-    res.resolveTime->int64ToHex->JsBuffer.fromHex,
-    res.resolveStatus->int8ToHex->JsBuffer.fromHex,
-    res.result->encodeBuffer,
-  |]);
-};
-
-let resolveStatusToInt = (rs: RequestSub.resolve_status_t) =>
-  switch (rs) {
-  | Pending => 0
-  | Success => 1
-  | Failure => 2
-  | Expired => 3
-  | Unknown => 4
-  };
-
-let toPackets = (request: request_t) => {
-  switch (request) {
-  | Request({
-      clientID,
-      oracleScript: {oracleScriptID: ID(oracleScriptID)},
-      calldata,
-      requestedValidators,
-      minCount,
-      id: ID(requestID),
-      reports,
-      requestTime,
-      resolveTime,
-      resolveStatus,
-      result,
-    }) => (
-      {
-        clientID,
-        oracleScriptID,
-        calldata,
-        askCount: requestedValidators |> Belt_Array.length,
-        minCount,
-      },
-      {
-        clientID,
-        requestID,
-        ansCount: reports |> Belt_Array.length,
-        requestTime: requestTime |> Belt_Option.getExn |> MomentRe.Moment.toUnix,
-        resolveTime: resolveTime |> Belt_Option.getExn |> MomentRe.Moment.toUnix,
-        resolveStatus: resolveStatus |> resolveStatusToInt,
-        result: result |> Belt_Option.getExn,
-      },
-    )
-  | RequestMini({
-      clientID,
-      oracleScriptID: ID(oracleScriptID),
-      calldata,
-      askCount,
-      minCount,
-      id: ID(requestID),
-      reportsCount: ansCount,
-      requestTime,
-      resolveTime,
-      resolveStatus,
-      result,
-    }) => (
-      {clientID, oracleScriptID, calldata, askCount, minCount},
-      {
-        clientID,
-        requestID,
-        ansCount,
-        requestTime: requestTime |> Belt_Option.getExn |> MomentRe.Moment.toUnix,
-        resolveTime: resolveTime |> Belt_Option.getExn |> MomentRe.Moment.toUnix,
-        resolveStatus: resolveStatus |> resolveStatusToInt,
-        result: result |> Belt_Option.getExn,
-      },
-    )
-  };
-};
-
-let createProof = (proof: Js.Json.t) => {
-  Proof(proof |> decodeProof) |> encode |> Belt_Option.getExn;
-};
-
-let createProof_2 = (request: request_t) => {
-  let (req, res) = request->toPackets;
-  JsBuffer.concat([|req->encodeRequest, res->encodeResponse|]);
+let createProofFromJson = (proof: Js.Json.t) => {
+  Proof(proof |> decodeProof) |> encode |> Belt_Option.getWithDefault(_, JsBuffer.from([||]));
 };

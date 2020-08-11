@@ -74,7 +74,7 @@ let make = (~requestID: ID.Request.t, ~requestOpt: option(RequestSub.t)) => {
               <CopyButton
                 data={
                   switch (requestOpt) {
-                  | Some({result: Some(_)}) => proof.jsonProof->NonEVMProof.createProof
+                  | Some({result: Some(_)}) => proof.jsonProof->NonEVMProof.createProofFromJson
                   | _ => "" |> JsBuffer.fromHex
                   }
                 }
