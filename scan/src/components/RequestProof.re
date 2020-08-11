@@ -90,6 +90,9 @@ let make = (~requestID: ID.Request.t, ~requestOpt: option(RequestSub.t)) => {
       </div>
       {showProof
          ? <>
+             <button onClick={_ => proof.jsonProof |> NonEVMProof.createProof_2}>
+               {"mumu" |> React.string}
+             </button>
              <VSpacing size=Spacing.lg />
              <div className=Styles.scriptContainer>
                <ReactHighlight className=Styles.padding>
