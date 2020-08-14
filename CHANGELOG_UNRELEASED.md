@@ -16,9 +16,11 @@
 
 ### Emitter & Flusher
 
+ - (impv) [\#2475](https://github.com/bandprotocol/bandchain/pull/2475) Add related data source and oracle script table.
+
 ### Scan
 
- - (imprv) [\#2473](https://github.com/bandprotocol/bandchain/pull/2473) Implemented OWASM code tab for OC index page, improved some components
+ - (impv) [\#2473](https://github.com/bandprotocol/bandchain/pull/2473) Implemented OWASM code tab for OC index page, improved some components
 
 ### Bridges
 
