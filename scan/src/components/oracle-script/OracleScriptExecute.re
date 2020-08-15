@@ -1,7 +1,13 @@
 module Styles = {
   open Css;
 
-  let container = style([padding2(~h=`px(20), ~v=`px(20))]);
+  let container =
+    style([
+      padding2(~v=`px(40), ~h=`px(45)),
+      Media.mobile([padding2(~v=`px(20), ~h=`zero)]),
+    ]);
+
+  let upperTextCotainer = style([marginBottom(`px(24))]);
 
   let paramsContainer = style([display(`flex), flexDirection(`column)]);
 
@@ -13,15 +19,14 @@ module Styles = {
     style([
       width(`percent(100.)),
       background(white),
-      paddingLeft(`px(20)),
+      padding2(~v=`zero, ~h=`px(16)),
       fontSize(`px(12)),
       fontWeight(`num(500)),
       outline(`px(1), `none, white),
-      height(`px(40)),
+      height(`px(37)),
       borderRadius(`px(4)),
-      boxShadow(
-        Shadow.box(~inset=true, ~x=`zero, ~y=`zero, ~blur=`px(4), Css.rgba(0, 0, 0, 0.1)),
-      ),
+      border(`px(1), `solid, Colors.gray9),
+      placeholder([color(Colors.blueGray3)]),
     ]);
 
   let buttonContainer = style([display(`flex), flexDirection(`row), alignItems(`center)]);
@@ -73,12 +78,32 @@ module Styles = {
     ]);
 
   let logo = style([width(`px(15))]);
+  let separatorLine =
+    style([
+      borderStyle(`none),
+      backgroundColor(Colors.gray9),
+      height(`px(1)),
+      margin3(~top=`px(10), ~h=`zero, ~bottom=`px(20)),
+    ]);
+  let titleSpacing = style([marginBottom(`px(8))]);
+  let infoIcon = style([width(`px(12)), height(`px(12)), display(`block)]);
 };
 
 let parameterInput = (Obi.{fieldName, fieldType}, index, setCalldataArr) => {
+  let fieldName = Js.String.replaceByRe([%re "/[_]/g"], " ", fieldName);
   <div className=Styles.listContainer key=fieldName>
-    <Text value={j|$fieldName ($fieldType)|j} size=Text.Md color=Colors.gray6 />
-    <VSpacing size=Spacing.xs />
+    <div className={CssHelper.flexBox()}>
+      <Text
+        value=fieldName
+        size=Text.Md
+        color=Colors.gray7
+        weight=Text.Semibold
+        transform=Text.Capitalize
+      />
+      <HSpacing size=Spacing.xs />
+      <Text value={j|($fieldType)|j} size=Text.Md color=Colors.gray7 weight=Text.Semibold />
+    </div>
+    <VSpacing size=Spacing.sm />
     <input
       className=Styles.input
       type_="text"
@@ -87,6 +112,96 @@ let parameterInput = (Obi.{fieldName, fieldType}, index, setCalldataArr) => {
         setCalldataArr(prev => {
           prev->Belt_Array.mapWithIndex((i, value) => {index == i ? newVal : value})
         });
+      }}
+    />
+  </div>;
+};
+
+let countInputs = (askCount, setAskCount, setMinCount) => {
+  <Row.Grid>
+    <Col.Grid col=Col.Two colSm=Col.Six>
+      <div className={Css.merge([CssHelper.flexBox(), Styles.titleSpacing])}>
+        <Text
+          value="Ask Count"
+          size=Text.Md
+          color=Colors.gray7
+          weight=Text.Semibold
+          transform=Text.Capitalize
+        />
+        <HSpacing size=Spacing.xs />
+        //TODO: remove mock message later
+        <CTooltip
+          tooltipPlacementSm=CTooltip.BottomLeft
+          tooltipText="Lorem ipsum, or lipsum as it is sometimes known.">
+          <img className=Styles.infoIcon src=Images.infoIcon />
+        </CTooltip>
+      </div>
+      <select
+        className=Styles.input
+        onChange={event => {
+          let newVal = ReactEvent.Form.target(event)##value;
+          setAskCount(_ => newVal);
+        }}>
+        {[|1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16|]
+         |> Belt.Array.map(_, index =>
+              <option key={(index |> string_of_int) ++ "askCount"} value={index |> string_of_int}>
+                {index |> string_of_int |> React.string}
+              </option>
+            )
+         |> React.array}
+      </select>
+    </Col.Grid>
+    <Col.Grid col=Col.Two colSm=Col.Six>
+      <div className={Css.merge([CssHelper.flexBox(), Styles.titleSpacing])}>
+        <Text
+          value="Min Count"
+          size=Text.Md
+          color=Colors.gray7
+          weight=Text.Semibold
+          transform=Text.Capitalize
+        />
+        <HSpacing size=Spacing.xs />
+        //TODO: remove mock message later
+        <CTooltip
+          tooltipPlacementSm=CTooltip.BottomLeft
+          tooltipText="Lorem ipsum, or lipsum as it is sometimes known.">
+          <img className=Styles.infoIcon src=Images.infoIcon />
+        </CTooltip>
+      </div>
+      <select
+        className=Styles.input
+        onChange={event => {
+          let newVal = ReactEvent.Form.target(event)##value;
+          setMinCount(_ => newVal);
+        }}>
+        {Belt.Array.makeBy(askCount |> int_of_string, i => i + 1)
+         |> Belt.Array.map(_, index =>
+              <option key={(index |> string_of_int) ++ "minCount"} value={index |> string_of_int}>
+                {index |> string_of_int |> React.string}
+              </option>
+            )
+         |> React.array}
+      </select>
+    </Col.Grid>
+  </Row.Grid>;
+};
+
+let clientIDInput = setClientID => {
+  <div className=Styles.listContainer>
+    <Text
+      value="Client ID"
+      size=Text.Md
+      color=Colors.gray7
+      weight=Text.Semibold
+      transform=Text.Capitalize
+    />
+    <VSpacing size=Spacing.sm />
+    <input
+      className=Styles.input
+      type_="text"
+      onChange={event => {
+        let newVal = ReactEvent.Form.target(event)##value;
+        setClientID(_ => newVal);
       }}
     />
   </div>;
@@ -131,8 +246,16 @@ module ExecutionPart = {
 
     let numParams = paramsInput->Belt_Array.size;
 
+    // let%Sub validatorCount = ValidatorSub.count();
+
     let (callDataArr, setCallDataArr) = React.useState(_ => Belt_Array.make(numParams, ""));
+    let (clientID, setClientID) = React.useState(_ => "from_band");
+    let (askCount, setAskCount) = React.useState(_ => "1");
+    let (minCount, setMinCount) = React.useState(_ => "1");
     let (result, setResult) = React.useState(_ => Nothing);
+
+    Js.Console.log2("Ask Count: ", askCount);
+    Js.Console.log2("Min Count: ", minCount);
 
     // TODO: Change when input can be empty
     let isUnused = {
@@ -172,61 +295,84 @@ module ExecutionPart = {
         );
         ();
       });
-
-    <div className=Styles.container>
-      <div className={Styles.hFlex(`auto)}>
-        <Text value="Click" />
-        <HSpacing size=Spacing.sm />
-        <Text value=" Request" weight=Text.Bold />
-        <HSpacing size=Spacing.sm />
-        <Text value=" to execute the oracle script." />
-      </div>
-      <VSpacing size=Spacing.md />
-      {isUnused
-         ? React.null
-         : <div>
-             <div className={Styles.hFlex(`auto)}>
-               <Text value="This oracle script requires the following" color=Colors.gray7 />
-               <HSpacing size=Spacing.sm />
-               <Text value={numParams > 1 ? "parameters:" : "parameter:"} color=Colors.gray7 />
-             </div>
-             <VSpacing size=Spacing.lg />
-             <div className=Styles.paramsContainer>
-               {paramsInput
-                ->Belt_Array.mapWithIndex((i, param) => parameterInput(param, i, setCallDataArr))
-                ->React.array}
-             </div>
-           </div>}
-      <VSpacing size=Spacing.md />
-      <div className=Styles.buttonContainer>
-        <button
-          className={Styles.button(result == Loading)}
-          onClick={_ =>
-            if (result != Loading) {
-              switch (
-                Obi.encode(
-                  schema,
-                  "input",
-                  paramsInput
-                  ->Belt_Array.map(({fieldName}) => fieldName)
-                  ->Belt_Array.zip(callDataArr)
-                  ->Belt_Array.map(((fieldName, fieldValue)) => Obi.{fieldName, fieldValue}),
-                )
-              ) {
-              | Some(encoded) =>
-                setResult(_ => Loading);
-                dispatch(AccountContext.SendRequest(id, encoded, requestCallback));
-                ();
-              | None => setResult(_ => Error("Encoding fail, please check each parameter's type"))
-              };
-              ();
-            }
-          }>
-          {(result == Loading ? "Sending Request ... " : "Request") |> React.string}
-        </button>
-      </div>
-      {resultRender(result, schema)}
-    </div>;
+    <Row.Grid>
+      <Col.Grid>
+        <div className=Styles.container>
+          {isUnused
+             ? React.null
+             : <div>
+                 <div className={Css.merge([CssHelper.flexBox(), Styles.upperTextCotainer])}>
+                   <Text
+                     value="This oracle script requires the following"
+                     color=Colors.gray7
+                     size=Text.Lg
+                   />
+                   <HSpacing size=Spacing.sm />
+                   {numParams == 0
+                      ? React.null
+                      : <Text
+                          value={numParams > 1 ? "parameters" : "parameter"}
+                          color=Colors.gray7
+                          weight=Text.Bold
+                          size=Text.Lg
+                        />}
+                 </div>
+                 <VSpacing size=Spacing.lg />
+                 <div className=Styles.paramsContainer>
+                   {paramsInput
+                    ->Belt_Array.mapWithIndex((i, param) =>
+                        parameterInput(param, i, setCallDataArr)
+                      )
+                    ->React.array}
+                 </div>
+               </div>}
+          <div> {clientIDInput(setClientID)} </div>
+          <hr className=Styles.separatorLine />
+          {countInputs(askCount, setAskCount, setMinCount)}
+          <VSpacing size=Spacing.md />
+          <div className=Styles.buttonContainer>
+            <button
+              className={Styles.button(result == Loading)}
+              onClick={_ =>
+                if (result != Loading) {
+                  switch (
+                    Obi.encode(
+                      schema,
+                      "input",
+                      paramsInput
+                      ->Belt_Array.map(({fieldName}) => fieldName)
+                      ->Belt_Array.zip(callDataArr)
+                      ->Belt_Array.map(((fieldName, fieldValue)) =>
+                          Obi.{fieldName, fieldValue}
+                        ),
+                    )
+                  ) {
+                  | Some(encoded) =>
+                    setResult(_ => Loading);
+                    dispatch(
+                      AccountContext.SendRequest(
+                        id,
+                        encoded,
+                        requestCallback,
+                        askCount,
+                        minCount,
+                        clientID,
+                      ),
+                    );
+                    ();
+                  | None =>
+                    setResult(_ => Error("Encoding fail, please check each parameter's type"))
+                  };
+                  ();
+                }
+              }>
+              {(result == Loading ? "Sending Request ... " : "Request") |> React.string}
+            </button>
+          </div>
+          {resultRender(result, schema)}
+        </div>
+      </Col.Grid>
+    </Row.Grid>;
   };
 };
 
